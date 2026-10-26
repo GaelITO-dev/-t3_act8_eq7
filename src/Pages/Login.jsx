@@ -2,41 +2,58 @@ import { useState } from "react";
 import fondo from "../assets/Fondo.PNG";
 import "./Login.css";
 
-export default function Login() {
-  //Relacionado al usuario, especificamente a lo que escribe en los inputs del formulario
+export default function Login({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  // Esto sirve más adelante al momento en el que debemos mostrar o ocultar la contraseña del formulario
   const [showPassword, setShowPassword] = useState(false);
-
-  // Este hook se usó para manejar los mensajes de validación cuando los campos están vacios
   const [fieldErrors, setFieldErrors] = useState({
     usernameErrorVacio: "",
     passwordErrorVacio: "",
   });
+  const [serverError, setServerError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-
-
-  const serverError = ""; 
-  //Lo voy a ocupar para validar que los usuarios y contraseñas sean correctas, en este punto aun no se implemnta 
-
-  
-
-  const handleSubmit = (eventoOnSubmitdelForm) => {
-    eventoOnSubmitdelForm.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
     const newErrors = { usernameErrorVacio: "", passwordErrorVacio: "" };
 
-    if (username.trim() === "") newErrors.usernameErrorVacio = "Error campo vacio";
-    if (password.trim() === "") newErrors.passwordErrorVacio = "Error contra vacio";
+    if (username.trim() === "") newErrors.usernameErrorVacio = "Ingresa tu usuario";
+    if (password.trim() === "") newErrors.passwordErrorVacio = "Ingresa tu contraseña";
 
     setFieldErrors(newErrors);
+    setServerError("");
 
-    // si algún campo está vacío se detiene el envío del formulario, bueno se descarta
-    if (username.trim() === "" || password.trim() === "") return;
+    if (newErrors.usernameErrorVacio || newErrors.passwordErrorVacio) return;
 
-    // falta llamar a la API de DummyJSON
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("https://dummyjson.com/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+          expiresInMins: 30,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "No fue posible iniciar sesión.");
+      }
+
+      onLogin(data);
+    } catch (error) {
+      setServerError(
+        error instanceof Error
+          ? error.message
+          : "No fue posible conectar con el servicio de inicio de sesión.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -45,7 +62,7 @@ export default function Login() {
         <h1 className="login__title">¿Hambre de pizza?</h1>
 
         <form onSubmit={handleSubmit} noValidate>
-          <label className="login__label" htmlFor="username">Correo electrónico</label>
+          <label className="login__label" htmlFor="username">Usuario</label>
           <div className="login__field">
             <svg className="login__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -54,7 +71,8 @@ export default function Login() {
             <input
               id="username"
               type="text"
-              placeholder="ejemplocruzazulcampeon@correo.com"
+              autoComplete="username"
+              placeholder="emilys"
               value={username}
               onChange={(alguienEscribeAlgo) => setUsername(alguienEscribeAlgo.target.value)}
             />
@@ -71,6 +89,7 @@ export default function Login() {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••••••"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -88,11 +107,13 @@ export default function Login() {
           </div>
           <p className="login__error">{fieldErrors.passwordErrorVacio}</p>
 
-          <a className="login__forgot" href="#">¿Olvidaste tu contraseña?</a>
+          <p className="login__demo">Acceso de prueba: emilys / emilyspass</p>
 
           {serverError && <p className="login__error login__error--server">{serverError}</p>}
 
-          <button type="submit" className="login__submit">Entrar</button>
+          <button type="submit" className="login__submit" disabled={isLoading}>
+            {isLoading ? "Iniciando sesión..." : "Entrar"}
+          </button>
         </form>
 
         <div className="login__divider"><span>o</span></div>
