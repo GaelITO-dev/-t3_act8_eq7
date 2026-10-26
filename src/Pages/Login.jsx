@@ -3,24 +3,19 @@ import fondo from "../assets/Fondo.PNG";
 import "./Login.css";
 import { loginUser } from "../services/authService";
 
-export default function Login() {
+export default function Login({ onLogin }) {
 
   //Relacionado al usuario, especificamente a lo que escribe en los inputs del formulario
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
-  // Esto sirve más adelante al momento en el que debemos mostrar o ocultar la contraseña del formulario
   const [showPassword, setShowPassword] = useState(false);
-
-  // Este hook se usó para manejar los mensajes de validación cuando los campos están vacios
   const [fieldErrors, setFieldErrors] = useState({
     usernameErrorVacio: "",
     passwordErrorVacio: "",
   });
-
-
-
   const [serverError, setServerError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   //Lo voy a ocupar para validar que los usuarios y contraseñas sean correctas, en este punto aun no se implemnta 
 
   
@@ -30,13 +25,13 @@ export default function Login() {
 
     const newErrors = { usernameErrorVacio: "", passwordErrorVacio: "" };
 
-    if (username.trim() === "") newErrors.usernameErrorVacio = "Error campo vacio";
-    if (password.trim() === "") newErrors.passwordErrorVacio = "Error contra vacio";
+    if (username.trim() === "") newErrors.usernameErrorVacio = "Ingresa tu usuario";
+    if (password.trim() === "") newErrors.passwordErrorVacio = "Ingresa tu contraseña";
 
     setFieldErrors(newErrors);
+    setServerError("");
 
-    // si algún campo está vacío se detiene el envío del formulario, bueno se descarta
-    if (username.trim() === "" || password.trim() === "") return;
+    if (newErrors.usernameErrorVacio || newErrors.passwordErrorVacio) return;
 
 
     //Prueba de implementación: fetch('https://dummyjson.com/users/1').then(res => res.json()).then(console.log);
@@ -45,6 +40,7 @@ export default function Login() {
     try {
       const user = await loginUser(username, password);
       console.log(user);
+      onLogin(user);
     } catch (error) {
       setServerError(error.message);
     }
@@ -58,7 +54,7 @@ export default function Login() {
         <h1 className="login__title">¿Hambre de pizza?</h1>
 
         <form onSubmit={handleSubmit} noValidate>
-          <label className="login__label" htmlFor="username">Correo electrónico</label>
+          <label className="login__label" htmlFor="username">Usuario</label>
           <div className="login__field">
             <svg className="login__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -67,7 +63,8 @@ export default function Login() {
             <input
               id="username"
               type="text"
-              placeholder="ejemplocruzazulcampeon@correo.com"
+              autoComplete="username"
+              placeholder="emilys"
               value={username}
               onChange={(alguienEscribeAlgo) => setUsername(alguienEscribeAlgo.target.value)}
             />
@@ -84,6 +81,7 @@ export default function Login() {
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="••••••••••••"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -101,11 +99,13 @@ export default function Login() {
           </div>
           <p className="login__error">{fieldErrors.passwordErrorVacio}</p>
 
-          <a className="login__forgot" href="#">¿Olvidaste tu contraseña?</a>
+          <p className="login__demo">Acceso de prueba: emilys / emilyspass</p>
 
           {serverError && <p className="login__error login__error--server">{serverError}</p>}
 
-          <button type="submit" className="login__submit">Entrar</button>
+          <button type="submit" className="login__submit" disabled={isLoading}>
+            {isLoading ? "Iniciando sesión..." : "Entrar"}
+          </button>
         </form>
 
         <div className="login__divider"><span>o</span></div>
