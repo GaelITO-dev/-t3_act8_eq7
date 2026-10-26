@@ -1,8 +1,10 @@
 import { useState } from "react";
 import fondo from "../assets/Fondo.PNG";
 import "./Login.css";
+import { loginUser } from "../services/authService";
 
 export default function Login() {
+
   //Relacionado al usuario, especificamente a lo que escribe en los inputs del formulario
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -18,12 +20,12 @@ export default function Login() {
 
 
 
-  const serverError = ""; 
+  const [serverError, setServerError] = useState("");
   //Lo voy a ocupar para validar que los usuarios y contraseñas sean correctas, en este punto aun no se implemnta 
 
   
 
-  const handleSubmit = (eventoOnSubmitdelForm) => {
+  const handleSubmit = async (eventoOnSubmitdelForm) => {
     eventoOnSubmitdelForm.preventDefault();
 
     const newErrors = { usernameErrorVacio: "", passwordErrorVacio: "" };
@@ -36,8 +38,19 @@ export default function Login() {
     // si algún campo está vacío se detiene el envío del formulario, bueno se descarta
     if (username.trim() === "" || password.trim() === "") return;
 
-    // falta llamar a la API de DummyJSON
+
+    //Prueba de implementación: fetch('https://dummyjson.com/users/1').then(res => res.json()).then(console.log);
+    
+    
+    try {
+      const user = await loginUser(username, password);
+      console.log(user);
+    } catch (error) {
+      setServerError(error.message);
+    }
   };
+
+  
 
   return (
     <div className="login" style={{ backgroundImage: `url(${fondo})` }}>
